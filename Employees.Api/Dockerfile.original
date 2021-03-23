@@ -1,0 +1,19 @@
+# Obtener imagen SDK de Microsoft
+FROM mcr.microsoft.com/dotnet/sdk:3.1 AS build
+WORKDIR /app
+EXPOSE 80
+EXPOSE 443
+
+# Copiar el csproj y restaurar dependencias (Vía Nuget) 
+COPY *.csproj ./
+RUN dotnet restore
+
+# Copiar los archivos del projecto y contruir el realese
+COPY . ./
+RUN dotnet publish -c Release -o out
+
+# Generar runtime image
+FROM mcr.microsoft.com/dotnet/aspnet:3.1
+WORKDIR /app
+COPY --from=build /app/out .
+ENTRYPOINT ["dotnet", "Employees.Api.dll"]
