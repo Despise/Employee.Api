@@ -1,9 +1,7 @@
-﻿using AutoMapper;
-using Employees.Core.DTOs;
-using Employees.Core.Entities;
-using Employees.Core.Interfaces;
+﻿using Employees.Application.Features.Employee.Commands;
+using Employees.Application.Features.Employee.Queries;
+using MediatR;
 using Microsoft.AspNetCore.Mvc;
-using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace Employees.Api.Controllers
@@ -12,59 +10,72 @@ namespace Employees.Api.Controllers
     [ApiController]
     public class EmployeeController : ControllerBase
     {
-        private readonly IEmployee _employee;
-        private readonly IMapper _mapper;
+        private readonly IMediator _mediator;
 
         public EmployeeController(
-            IEmployee employee,
-            IMapper mapper
+            IMediator mediator
             )
         {
-            _employee = employee;
-            _mapper = mapper;
+            _mediator = mediator;
         }
 
         [HttpGet]
         [Route("GetAllEmployees")]
         public async Task<IActionResult> GetAllAsync()
         {
-            var emps = await _employee.GetEmployees();
-            var empsDtos = _mapper.Map<IEnumerable<EmployeeDto>>(emps);
-            return Ok(empsDtos);
+            var emp = await _mediator.Send(new GetEmployeesListQuery());
+            return Ok(emp);
         }
 
         [HttpGet]
         [Route("GetEmployee")]
         public async Task<IActionResult> Get(int rut)
         {
-            var emp = await _employee.GetEmployee(rut);
-            var empDto = _mapper.Map<EmployeeDto>(emp);
-            return Ok(empDto);
+            var emp = await _mediator.Send(new GetEmployeeById(rut));
+            return Ok(emp);
         }
 
         [HttpPost]
         [Route("CreateEmployee")]
-        public async Task<IActionResult> Post([FromBody] EmployeeDto employeeDto)
+        public async Task<IActionResult> Post([FromBody] CreateEmployeeCommand cmd)
         {
-            var emp = _mapper.Map<Employee>(employeeDto);
-            await _employee.InsertEmployee(emp);
-            return Ok(emp);
+            var resp = await _mediator.Send(cmd);
+            //return Ok(resp);
+            return CreatedAtAction(nameof(Get), new { rut = resp.IdRut }, resp);
+            //var emp = _mapper.Map<Employee>(empDto);
+            //await _employee.InsertEmployee(emp);
+            //return Ok(emp);
         }
 
-        //[HttpPut]
-        //[Route("UpdateEmployee")]
-        //public ActionResult Put([FromBody] Employee employee) {
-        //    var rep = _employeeContext.Employee.Update(employee);
-        //    _employeeContext.SaveChanges();
-        //    return Ok();
-        //}
-        //[HttpDelete]
-        //[Route("DeleteEmployee")]
-        //public ActionResult Delete(int rut) {
-        //    var rep = _employeeContext.Employee.Where(x => x.IdRut == rut).FirstOrDefault();
-        //    _employeeContext.Employee.Remove(rep);
-        //    _employeeContext.SaveChanges();
-        //    return Ok();
-        //}
+        [HttpPut]
+        [Route("UpdateEmployee")]
+        public async Task<IActionResult> Put([FromBody] UpdateEmployeeCommand cmd)
+        {
+            var emp = await _mediator.Send(cmd);
+            return CreatedAtAction(nameof(Get), new { rut = emp.IdRut }, emp);
+            //var emp = _mapper.Map<Employee>(empDto);
+            //var resp = await _employee.UpdateEmployee(emp);
+            //return Ok(resp);
+
+            //var rep = _employeeContext.Employee.Update(employee);
+            //_employeeContext.SaveChanges();
+            //return Ok();
+        }
+
+        [HttpDelete]
+        [Route("DeleteEmployee")]
+        public async Task<IActionResult> Delete(DeleteEmployeeCommand cmd)
+        {
+            var resp = await _mediator.Send(cmd);
+            return Ok(resp);
+
+            //var resp = await _employee.DeleteEmployee(rut);
+            //return Ok(resp);
+
+            //var rep = _employeeContext.Employee.Where(x => x.IdRut == rut).FirstOrDefault();
+            //_employeeContext.Employee.Remove(rep);
+            //_employeeContext.SaveChanges();
+            //return Ok();
+        }
     }
 }
