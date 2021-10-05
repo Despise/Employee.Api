@@ -1,5 +1,5 @@
-﻿using Employees.Core.Entities;
-using Employees.Core.Interfaces;
+﻿using Employees.Domain.Entities;
+using Employees.Domain.Interfaces;
 using Employees.Infrastructure.Persistencia;
 using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
@@ -25,10 +25,9 @@ namespace Employees.Infrastructure.Repositories
             return emp;
         }
 
-        public async Task<IEnumerable<Employee>> GetEmployees()
+        public async Task<List<Employee>> GetEmployees()
         {
             var emps = await _employeeContext.Employee.ToListAsync();
-
             return emps;
         }
 
@@ -36,6 +35,18 @@ namespace Employees.Infrastructure.Repositories
         {
             _employeeContext.Employee.Add(employee);
             await _employeeContext.SaveChangesAsync();
+        }
+
+        public async Task<bool> UpdateEmployee(Employee employee) {
+            _employeeContext.Update(employee);
+            return await _employeeContext.SaveChangesAsync() > 0;
+        }
+
+        public async Task<bool> DeleteEmployee(int iRut) {
+            //var rep = _employeeContext.Employee.Where(x => x.IdRut == rut).FirstOrDefault();
+            var emp = await GetEmployee(iRut);
+            _employeeContext.Employee.Remove(emp);
+            return await _employeeContext.SaveChangesAsync() > 0;
         }
     }
 }

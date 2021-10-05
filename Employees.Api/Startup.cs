@@ -1,6 +1,6 @@
-using Employees.Core.Interfaces;
+using Employees.Application.Extensions;
+using Employees.Infrastructure.Extensions;
 using Employees.Infrastructure.Persistencia;
-using Employees.Infrastructure.Repositories;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
@@ -26,13 +26,19 @@ namespace Employees.Api
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddControllers();
+            //services.AddControllers().AddFluentValidation(options =>
+            //{
+            //    options.RegisterValidatorsFromAssemblies(AppDomain.CurrentDomain.GetAssemblies());
+            //});
+
+            //services.AddControllers();
+
 
             // Configuración de automapper obtiene los ensamblados para buscar los profile 
-            services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
+           // services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
             //Inyección de dependencias <Interface, ClaseRepo>
-            services.AddTransient<IEmployee, EmployeeRepository>();
+            //services.AddTransient<IEmployee, EmployeeRepository>(); SE CAMBIA A INFRASTRUCTURE
 
             //var hcBuilder = services.AddHealthChecks();
             //hcBuilder.AddCheck("self", () => HealthCheckResult.Healthy());
@@ -41,7 +47,6 @@ namespace Employees.Api
             //services.AddDbContext<EmployeeContext>(options => options.UseSqlServer(Configuration.GetConnectionString("EmployeeDB")));
 
             services.AddDbContext<EmployeeContext>(options => options.UseSqlServer(Configuration["ConnectionStrings:EmployeeDB"]));
-
 
             services.AddSwaggerGen(c =>
             {
@@ -67,6 +72,14 @@ namespace Employees.Api
                 var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
                 c.IncludeXmlComments(xmlPath);
             });
+
+
+            //services.AddMediatR(typeof(Startup));
+            //services.AddMediatR(Assembly.Load("Employees.Aplication"));
+            //services.AddMediatR(Assembly.GetExecutingAssembly()); // Si Funciona pero da error en controller
+            //services.AddMediatR(typeof(GetEmployeesListQueryHandler).GetTypeInfo().Assembly); // Funciona al 100%
+            services.AddApplicationLayer();
+            services.AddInfrastructureLayer();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
